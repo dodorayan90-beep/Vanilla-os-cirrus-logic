@@ -1,9 +1,7 @@
-# Custom Vib Image
+# Citron
+This is a custom vanilla os image with snd_hda_macbookpro by davidjo preinstalled
 
-This template repository is a starting point for creating custom [Vib images](https://github.com/Vanilla-OS/Vib) on top of the [official Vanilla OS images](https://images.vanillaos.org) like [desktop image](https://github.com/Vanilla-OS/desktop-image). It contains a basic recipe and an example module to get you started.
 
-> [!TIP]
-> It is suggested to check the [Vib documentation](https://docs.vanillaos.org/collections/vib) to know more about the recipe format, structure of modules and the supported fields.
 
 ## Getting Started
 
