@@ -1,15 +1,15 @@
-name: Custom Vanilla Desktop # Replace this name with your image name
-id: custom # Replace this ID with your image ID
+name: Citron
+id: citron
+
 stages:
 - id: build
-  base: ghcr.io/vanilla-os/desktop:main # Optionally, Replace this image URL with a different one i.e. nvidia:main, etc
+  base: ghcr.io/vanilla-os/desktop:main
   singlelayer: false
   labels:
-    maintainer: self-maintained # Optionally, Replace this with your name
+    maintainer: adam
   args:
-    DEBIAN_FRONTEND: noninteractive # Set the image environment as non-interactive
-  
-  # Commands to run first before building the modules
+    DEBIAN_FRONTEND: noninteractive
+
   runs:
     commands:
       - echo 'APT::Install-Recommends "1";' > /etc/apt/apt.conf.d/01norecommends
@@ -18,30 +18,30 @@ stages:
   - name: init-setup
     type: shell
     commands:
-    - lpkg --unlock
-    - apt-get update
+      - lpkg --unlock
+      - apt-get update
 
-  # Put your custom actions below this comment
-
-  - name: example-packages # Sample module using the built-in Apt module to install packages
-    type: apt
-    source:
-      packages:
-      - vim
-
-  - name: example-commands # Sample module demonstrating the Shell module with custom commands
+  # 🔧 Dev tools and headers
+  - name: dev-packages
     type: shell
     commands:
-    - echo Example output
+      - apt-get install -y gcc make patch wget git dkms kmod linux-headers-6.12.38+deb13-amd64
 
-  - name: example-modules # Sample module demonstrating importing local and remote modules
-    type: includes
-    includes:
-      - modules/50-install-debs.yml # Sample local module present in this repository
-      # - gh:vanilla-os/dev-image:main:modules/00-basics.yml # Sample GitHub remote module in the format: `gh:your-name/your-repo:branch:modules/file.yml`
-      # - https://raw.githubusercontent.com/Vanilla-OS/dev-image/main/modules/05-go.yml # Sample full URL remote module
-
-  # Put your custom actions above this comment
+  # 🎵 MacBook audio driver
+  - name: macbook-audio-driver
+    type: shell
+    commands:
+      - git clone https://github.com/davidjo/snd_hda_macbook.git /usr/src/snd_hda_macbook-0.1
+      - cd /usr/src/snd_hda_macbook-0.1
+      - |
+        KVER=$(uname -r | cut -d. -f1,2)
+        if dpkg --compare-versions "$KVER" ge "6.17"; then
+          echo "Kernel >= 6.17 detected, running new installer"
+          bash ./install.cirrus.driver.sh
+        else
+          echo "Kernel < 6.17 detected, running pre-6.17 installer"
+          bash ./install.cirrus.driver.pre617.sh
+        fi
 
   - name: set-image-name-abroot
     type: includes
@@ -51,23 +51,24 @@ stages:
   - name: cleanup
     type: shell
     commands:
-    - apt-get autoremove -y
-    - apt-get clean
-    - lpkg --lock
+      - apt-get autoremove -y
+      - apt-get clean
+      - lpkg --lock
 
-  - name: fsguard
-    type: fsguard
-    CustomFsGuard: false
-    FsGuardLocation: "/usr/sbin/FsGuard"
-    GenerateKey: true
-    FilelistPaths: ["/usr/bin"]
-    modules:
-      - name: remove-prev-fsguard
-        type: shell
-        commands:
-          - rm -rf /FsGuard 
-          - rm -f ./minisign.pub ./minisign.key 
-          - chmod +x /usr/sbin/init
+  # Optional FsGuard (commented out)
+  # - name: fsguard
+  #   type: fsguard
+  #   CustomFsGuard: false
+  #   FsGuardLocation: "/usr/sbin/FsGuard"
+  #   GenerateKey: true
+  #   FilelistPaths: ["/usr/bin"]
+  #   modules:
+  #     - name: remove-prev-fsguard
+  #       type: shell
+  #       commands:
+  #         - rm -rf /FsGuard
+  #         - rm -f ./minisign.pub ./minisign.key
+  #         - chmod +x /usr/sbin/init
 
   - name: cleanup2
     type: shell
